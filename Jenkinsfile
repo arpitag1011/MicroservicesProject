@@ -76,7 +76,7 @@ pipeline {
         stage('Build UserService') {
             steps {
                 dir('UserService') {
-                    sh 'mvn clean package -DskipTests'
+                    bat 'mvn clean package -DskipTests'
                 }
             }
         }
@@ -84,7 +84,7 @@ pipeline {
         stage('Build OrderService') {
             steps {
                 dir('OrderService') {
-                    sh 'mvn clean package -DskipTests'
+                    bat 'mvn clean package -DskipTests'
                 }
             }
         }
@@ -104,7 +104,7 @@ pipeline {
 
         stage('Deploy Services') {
             steps {
-                sh '''
+                bat '''
                 docker stop userservice || true
                 docker stop orderservice || true
                 docker rm userservice || true
