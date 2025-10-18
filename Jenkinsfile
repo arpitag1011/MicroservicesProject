@@ -60,12 +60,14 @@
 //         }
 //     }
 // }
+
 pipeline {
     agent any
     environment {
         DOCKER_HUB_CREDENTIALS = 'docker-hub-creds'
-        DOCKER_HUB_USERNAME = 'arpitag1011'
+        DOCKER_HUB_USERNAME = 'arpitag1011'   // 🔁 your Docker Hub username
     }
+
     stages {
         stage('Checkout') {
             steps {
@@ -95,6 +97,7 @@ pipeline {
                     docker.withRegistry('https://index.docker.io/v1/', DOCKER_HUB_CREDENTIALS) {
                         def userServiceImage = docker.build("${DOCKER_HUB_USERNAME}/userservice:1.0", "UserService/")
                         userServiceImage.push()
+
                         def orderServiceImage = docker.build("${DOCKER_HUB_USERNAME}/orderservice:1.0", "OrderService/")
                         orderServiceImage.push()
                     }
@@ -104,14 +107,19 @@ pipeline {
 
         stage('Deploy Services') {
             steps {
-                bat '''
-                docker stop userservice || true
-                docker stop orderservice || true
-                docker rm userservice || true
-                docker rm orderservice || true
-                docker run -d --name userservice -p 8081:8081 ${DOCKER_HUB_USERNAME}/userservice:1.0
-                docker run -d --name orderservice -p 8082:8082 ${DOCKER_HUB_USERNAME}/orderservice:1.0
-                '''
+                withEnv(["DOCKER_HUB_USERNAME=${env.DOCKER_HUB_USERNAME}"]) {
+                    bat '''
+                    echo Stopping and removing old containers if they exist...
+                    docker stop userservice 2>nul
+                    docker rm userservice 2>nul
+                    docker stop orderservice 2>nul
+                    docker rm orderservice 2>nul
+
+                    echo Running new containers...
+                    docker run -d --name userservice -p 8081:8081 %DOCKER_HUB_USERNAME%/userservice:1.0
+                    docker run -d --name orderservice -p 8082:8082 %DOCKER_HUB_USERNAME%/orderservice:1.0
+                    '''
+                }
             }
         }
     }
